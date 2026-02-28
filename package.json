@@ -1,0 +1,30 @@
+{
+  "name": "nullmodel",
+  "version": "0.1.0",
+  "description": "A fake LLM API server for building AI interfaces without keys, cost, or latency surprises.",
+  "keywords": ["llm", "mock", "openai", "anthropic", "streaming", "sse", "ai", "developer-tools"],
+  "license": "MIT",
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arkiiitekt/nullmodel"
+  },
+  "type": "module",
+  "main": "src/server.js",
+  "bin": {
+    "nullmodel": "./bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "nullmodel.config.json"
+  ],
+  "scripts": {
+    "start": "node bin/cli.js",
+    "dev": "node bin/cli.js --verbose"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {}
+}
