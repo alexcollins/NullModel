@@ -1,37 +1,34 @@
-# nullmodel
+# NullModel
 
-A fake LLM API server for building AI interfaces — without keys, cost, or latency surprises.
+![NullModel repository header](.github/repo-header.png)
 
-Drop-in replacement for OpenAI and Anthropic APIs. Faithfully replicates real streaming SSE formats so your frontend can't tell the difference.
-
-## Why
-
-Every AI app developer has the same problem: you're building UI that talks to an LLM, but you're burning API credits, waiting on real latency, and can't test edge cases like errors, slow responses, or tool calls on demand.
-
-`nullmodel` fixes this. One command, fake API, real streaming format.
-
-## Quick Start
+**Fake LLM API server for building AI interfaces — without keys, cost, or latency surprises.**
 
 ```bash
 npx nullmodel
 ```
 
-That's it. Point your app's base URL at `http://localhost:4000` and use any API key — it's all fake.
+---
 
-## What It Fakes
+## What it is
+
+NullModel is a drop-in replacement for OpenAI, Anthropic, and Gemini APIs. Point your app's base URL at `http://localhost:4000`, use any API key — it's all fake. Faithfully replicates the exact streaming SSE formats so your frontend can't tell the difference.
+
+- Exact chunk/event format for OpenAI, Anthropic, and Gemini
+- Built-in personas to exercise different UI states
+- Chaos mode for realistic error injection
+- Zero dependencies — Node.js built-ins only, works with Node 18+
 
 | Endpoint | Provider | Streaming | Non-Streaming |
-|----------|----------|-----------|---------------|
+| --- | --- | --- | --- |
 | `POST /v1/chat/completions` | OpenAI | ✅ SSE chunks | ✅ JSON |
 | `POST /v1/messages` | Anthropic | ✅ SSE events | ✅ JSON |
 | `POST /v1beta/models/:model:generateContent` | Gemini | — | ✅ JSON |
 | `POST /v1beta/models/:model:streamGenerateContent` | Gemini | ✅ SSE chunks | — |
-| `POST /v1beta/models/:model:streamGenerateContent` | Gemini | ✅ SSE chunks | — |
-| `POST /v1beta/models/:model:generateContent` | Gemini | — | ✅ JSON |
 
-All three providers match the **exact** chunk/event format of the real APIs. If your frontend parses OpenAI SSE, Anthropic events, or Gemini streams, it will work unchanged.
+---
 
-## Usage With Your App
+## Quick Start
 
 ### OpenAI SDK
 
@@ -40,7 +37,7 @@ import OpenAI from 'openai';
 
 const client = new OpenAI({
   baseURL: 'http://localhost:4000/v1',
-  apiKey: 'fake-key', // anything works
+  apiKey: 'fake-key',
 });
 
 const stream = await client.chat.completions.create({
@@ -106,12 +103,14 @@ while (true) {
 }
 ```
 
+---
+
 ## Personas
 
 Built-in response shapes that exercise different UI states:
 
 | Persona | What It Does |
-|---------|-------------|
+| --- | --- |
 | `balanced` | Medium-length, natural responses (default) |
 | `verbose` | Long, detailed — tests scroll & rendering perf |
 | `terse` | Very short — tests compact UI states |
@@ -120,15 +119,13 @@ Built-in response shapes that exercise different UI states:
 | `tool_calls` | Function calls — tests tool call UI |
 | `error_prone` | Random error states — tests error handling |
 
-### Set default persona
+Set a default:
 
 ```bash
 npx nullmodel --persona code
 ```
 
-### Override per request
-
-Add `"_persona": "verbose"` to any request body:
+Override per request with `"_persona"` in the request body:
 
 ```json
 {
@@ -139,6 +136,8 @@ Add `"_persona": "verbose"` to any request body:
 }
 ```
 
+---
+
 ## Chaos Mode
 
 Randomly inject real-world failure scenarios:
@@ -148,13 +147,12 @@ npx nullmodel --chaos
 ```
 
 When enabled, a percentage of requests will randomly:
+
 - Return **429 rate limit** errors (with proper `retry-after` headers)
 - Return **500 server errors**
 - Experience **5x latency slowdowns**
 
-Each error response matches the exact format of the real provider, so your error handling code gets tested against realistic payloads.
-
-Configure chaos rates in `nullmodel.config.json`:
+Each error response matches the exact format of the real provider. Configure in `nullmodel.config.json`:
 
 ```json
 {
@@ -166,6 +164,8 @@ Configure chaos rates in `nullmodel.config.json`:
   }
 }
 ```
+
+---
 
 ## Configuration
 
@@ -190,10 +190,10 @@ Create a `nullmodel.config.json` in your project root:
 }
 ```
 
-### CLI Options
+### CLI options
 
 | Flag | Description | Default |
-|------|-------------|---------|
+| --- | --- | --- |
 | `--port, -p` | Server port | `4000` |
 | `--persona` | Default response persona | `balanced` |
 | `--latency` | Base per-token delay (ms) | `30` |
@@ -202,24 +202,16 @@ Create a `nullmodel.config.json` in your project root:
 | `--personas` | List available personas | — |
 | `--help` | Show help | — |
 
-## Meta Endpoints
+### Meta endpoints
 
 | Endpoint | Description |
-|----------|-------------|
+| --- | --- |
 | `GET /` | Health check |
 | `GET /health` | Health check |
 | `GET /personas` | List available personas |
 | `GET /config` | Current running config |
 
-## Supported Providers
-
-- **OpenAI** — `/v1/chat/completions` (works with `openai` npm package)
-- **Anthropic** — `/v1/messages` (works with `@anthropic-ai/sdk`)
-- **Google Gemini** — `/v1beta/models/:model:generateContent` and `:streamGenerateContent`
-
-## Zero Dependencies
-
-`nullmodel` uses only Node.js built-in modules. No Express, no frameworks, no dependency tree. Works with Node 18+.
+---
 
 ## License
 
