@@ -1,5 +1,6 @@
 import { tokenize, getTokenDelay, getFirstTokenDelay, generateId, estimateTokens, sleep } from '../utils/streaming.js';
 import { getResponse, getToolCall, getPersona } from '../personas/index.js';
+import { getChaosResponse } from '../utils/chaos.js';
 
 /**
  * Handle OpenAI-compatible /v1/chat/completions
@@ -23,6 +24,11 @@ export async function handleChatCompletions(req, res, body, config) {
 
   const completionId = generateId('chatcmpl');
   const created = Math.floor(Date.now() / 1000);
+
+  const simulatedError = resolveSimulatedError(content);
+  if (simulatedError) {
+    return sendProviderError(res, 'openai', simulatedError);
+  }
   const promptTokens = estimateTokens(JSON.stringify(body.messages || []));
   const completionTokens = estimateTokens(content);
 
@@ -234,6 +240,20 @@ function resolvePersona(body, config) {
   // Check for x-nullmodel-persona header-style hint in the body
   const hint = body._persona || config.defaults.persona;
   return getPersona(hint);
+}
+
+function resolveSimulatedError(content) {
+  if (typeof content !== 'string' || !content.startsWith('__ERROR__:')) return null;
+  return content.slice('__ERROR__:'.length);
+}
+
+function sendProviderError(res, provider, errorType) {
+  const errorResponse = getChaosResponse(errorType, provider);
+  res.writeHead(errorResponse.status, {
+    'Content-Type': 'application/json',
+    ...(errorResponse.headers || {}),
+  });
+  res.end(JSON.stringify(errorResponse.body));
 }
 
 function chunkString(str, size) {
