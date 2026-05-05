@@ -1,5 +1,6 @@
 import { tokenize, getTokenDelay, getFirstTokenDelay, generateId, estimateTokens, sleep } from '../utils/streaming.js';
 import { getResponse, getToolCall, getPersona } from '../personas/index.js';
+import { getChaosResponse } from '../utils/chaos.js';
 
 /**
  * Handle Anthropic-compatible /v1/messages
@@ -21,6 +22,11 @@ export async function handleMessages(req, res, body, config) {
   }
 
   const messageId = generateId('msg');
+
+  const simulatedError = resolveSimulatedError(content);
+  if (simulatedError) {
+    return sendProviderError(res, 'anthropic', simulatedError);
+  }
   const inputTokens = estimateTokens(JSON.stringify(body.messages || []));
   const outputTokens = estimateTokens(content);
 
@@ -218,6 +224,20 @@ function writeSSE(res, event, data) {
 function resolvePersona(body, config) {
   const hint = body._persona || config.defaults.persona;
   return getPersona(hint);
+}
+
+function resolveSimulatedError(content) {
+  if (typeof content !== 'string' || !content.startsWith('__ERROR__:')) return null;
+  return content.slice('__ERROR__:'.length);
+}
+
+function sendProviderError(res, provider, errorType) {
+  const errorResponse = getChaosResponse(errorType, provider);
+  res.writeHead(errorResponse.status, {
+    'Content-Type': 'application/json',
+    ...(errorResponse.headers || {}),
+  });
+  res.end(JSON.stringify(errorResponse.body));
 }
 
 function chunkString(str, size) {
